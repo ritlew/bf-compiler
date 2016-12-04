@@ -10,37 +10,53 @@
 int only_asm = 0;
 int only_object = 0;
 
-void create_exe(int buf_n, char ** buffer, char * filename){
-    int pid;
-    char f1_hold[1000];
-    char f2_hold[1000];
-    int i;
+void write_asm(int buf_n, char ** buffer, char * filename){
+	char f1_hold[1000];
+	int i;
     FILE* f;
-    sprintf(f1_hold, "%s.asm", filename);
+    
+	char * beg[7] = {
+		"section\t.text\n",
+		"\tglobal _start\n",
+		"\n",
+		"section\t.data\n",
+		"\tbuf times 30000 dd 0\n",
+		"\tbuf_p dd 0\n\n",
+		"_start:\n"
+	};
+
+	char * end[3] = {
+		"\tmov eax, 1\n",
+		"\tmov ebx, 0\n",
+		"\tint 0x80\n"
+	};
+
+	sprintf(f1_hold, "%s.asm", filename);
 	f = fopen(f1_hold, "w");
 
-		char * beg = "section	.text\n\
-\tglobal _start\n\
-\n\
-section    .data\n\
-\n\
-\tbuf times 30000 dd 0\n\
-\tbuf_p dd 0\n";
+	for (i = 0; i < 7; i++){
+		fwrite(beg[i], strlen(beg[i]), 1, f);
+	}
 
-	fwrite(beg, strlen(beg), 1, f);
-	fwrite("_start:\n", strlen("_start:\n"), 1, f);
 	for (i = 0; i < buf_n; i++){
 		sprintf(f1_hold, "\t%s", buffer[i]);
 		fwrite(f1_hold, strlen(f1_hold), 1, f);
 	}
-	char * end = "\tmov eax, 1\n\tmov ebx, 0\n\tint 0x80";
-	fwrite(end, strlen(end), 1, f);
 
+	for (i = 0; i < 3; i++){
+		fwrite(end[i], strlen(end[i]), 1, f);
+	}
+	
 	fclose(f);
+}
+
+void create_exe(char * filename){
+    int pid;
+    char f1_hold[1000];
+    char f2_hold[1000];
+    
 	if (!only_asm){
-
 	    pid = fork();
-
 		if (pid){
 			wait(NULL);
 			sprintf(f1_hold, "%s.asm", filename);
@@ -49,10 +65,8 @@ section    .data\n\
 				sprintf(f1_hold, "%s.o", filename);
 				unlink(f1_hold);
 			}
-
 		} else {
 			pid = fork();
-
 		    if (pid){
 		    	wait(NULL);
 		    	if (!only_object){
@@ -67,11 +81,9 @@ section    .data\n\
 		    	sprintf(f2_hold, "%s.asm", filename);
 		    	char * commands[7] = {"nasm", "-f", "elf", "-o", f1_hold, f2_hold, NULL};
 				execvp(commands[0], commands);
-		    }
-			
+		    }	
 		}
 	}
-
 }
 
 void buf_write(int* buf_n, char * str, char ** buffer){
@@ -216,7 +228,8 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	create_exe(buf_n, buffer, filename);
+	write_asm(buf_n, buffer, filename);
+	create_exe(filename);
 
 	return 0;
 }
