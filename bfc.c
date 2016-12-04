@@ -1,10 +1,71 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <error.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-typedef struct {
+int only_asm = 0;
+int only_object = 0;
 
-} commands;
+void create_exe(int buf_n, char ** buffer, char * filename){
+    int pid;
+
+    char temp[1000];
+    int i;
+    FILE* f;
+	f = fopen("prog.asm", "w");
+
+		char * beg = "section	.text\n\
+\tglobal _start\n\
+\n\
+section    .data\n\
+\n\
+\tbuf times 30000 dd 0\n\
+\tbuf_p dd 0\n";
+
+	fwrite(beg, strlen(beg), 1, f);
+	fwrite("_start:\n", strlen("_start:\n"), 1, f);
+	for (i = 0; i < buf_n; i++){
+		sprintf(temp, "\t%s", buffer[i]);
+		fwrite(temp, strlen(temp), 1, f);
+	}
+	char * end = "\tmov eax, 1\n\tmov ebx, 0\n\tint 0x80";
+	fwrite(end, strlen(end), 1, f);
+
+	fclose(f);
+	if (!only_asm){
+
+	    pid = fork();
+
+		if (pid){
+			wait(NULL);
+			unlink("prog.asm");
+			if (!only_object){
+				unlink("prog.o");
+			}
+
+		} else {
+			pid = fork();
+
+		    if (pid){
+		    	wait(NULL);
+		    	if (!only_object){
+			    	char * commands[7] = {"ld", "-m", "elf_i386", "-o", "prog", "prog.o", NULL};
+					execvp(commands[0], commands);
+				} else {
+					exit(0);
+				}
+		    } else {
+		    	char * commands[5] = {"nasm", "-f", "elf", "prog.asm", NULL};
+				execvp(commands[0], commands);
+		    }
+			
+		}
+	}
+
+}
 
 void buf_write(int* buf_n, char * str, char ** buffer){
 	buffer[*buf_n] = (char *)malloc(strlen(str));
@@ -14,19 +75,27 @@ void buf_write(int* buf_n, char * str, char ** buffer){
 int main(int argc, char* argv[]){
 	if (argc < 2){
 		printf("No input specified\n");
+		return -1;
 	}
+
+	int opt;
+
+	while ((opt = getopt(argc, argv, "SO")) != -1){
+		switch (opt){
+			case 'S': only_asm = 1; break;
+			case 'O': only_object = 1; break;
+			default: ;
+		}
+	}
+
 	int i;
 	char * file[10000];
-	char * beg = "section	.text\n\
-\tglobal _start\n\
-\n\
-section    .data\n\
-\n\
-\tbuf times 30000 dd 0\n\
-\tbuf_p dd 0\n";
+
+
 
 	char * buffer[30000];
 	int buf_n = 0;
+
 	int buf_p = 0;
 	int labels[500] = {0};
 	int labels_d[500] = {0};
@@ -34,7 +103,7 @@ section    .data\n\
 	char read_buffer[30001];
 
 	FILE* read_f;
-	read_f = fopen(argv[1], "r");
+	read_f = fopen(argv[argc-1], "r");
 
 	int t = fread(read_buffer, 1, 30000, read_f);
 	int r_ptr = 0;
@@ -136,23 +205,7 @@ section    .data\n\
 		}
 	}
 
-
-
-
-	FILE* f;
-	f = fopen("prog.asm", "w");
-
-	fwrite(beg, strlen(beg), 1, f);
-	fwrite("_start:\n", strlen("_start:\n"), 1, f);
-	for (i = 0; i < buf_n; i++){
-		sprintf(temp, "\t%s", buffer[i]);
-		fwrite(temp, strlen(temp), 1, f);
-	}
-	char * end = "\tmov eax, 1\n\tmov ebx, 0\n\tint 0x80";
-	fwrite(end, strlen(end), 1, f);
-
-
-	fclose(f);
+	create_exe(buf_n, buffer, argv[1]);
 
 	return 0;
 }
