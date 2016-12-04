@@ -7,10 +7,142 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-int only_asm = 0;
+int only_asm_h = 0;
 int only_object = 0;
+typedef struct {
+	char * buffer[30000];
+	int n;
+} asm_h;
 
-void write_asm(int buf_n, char ** buffer, char * filename){
+void buf_write(asm_h* lines, char * str){
+	lines->buffer[lines->n] = (char *)malloc(strlen(str));
+	strcpy(lines->buffer[lines->n++], str);
+}
+
+void bf_to_asm(asm_h* lines, char* commands){
+	int i;
+
+	int labels[500] = {0};
+	int labels_d[500] = {0};
+	int label_l = 0;
+
+	char temp[80];
+	int a_count;
+	buf_write(lines, "mov ebx, 1\n");
+	buf_write(lines, "mov eax, buf_p\n");
+	buf_write(lines, "mov ecx, buf\n");
+	buf_write(lines, "add ecx, [buf_p]\n\n");
+	for (i = 0; i < strlen(commands); i++){
+		if (commands[i] == '+'){
+			a_count = 1;
+			while (commands[++i] == '+'){
+				a_count++;
+			} 
+			i--;
+
+			//buf_write(lines, "mov eax, buf_p\n");
+			///buf_write(lines, "mov ecx, buf\n");
+			//buf_write(lines, "add ecx, [buf_p]\n");
+			//buf_write(lines, "mov ebx, 1\n");
+			if (a_count > 1){
+				sprintf(temp, "mov edx, %d\n", a_count);
+				buf_write(lines, temp);
+				buf_write(lines, "add [ecx], edx\n\n");
+			} else {
+				buf_write(lines, "mov ebx, 1\n");
+				buf_write(lines, "add [ecx], ebx\n\n");
+			}
+			
+		} else if (commands[i] == '-'){
+			a_count = 1;
+			while (commands[++i] == '-'){
+				a_count++;
+			} 
+			i--;
+
+			//buf_write(lines, "mov eax, buf_p\n");
+			///buf_write(lines, "mov ecx, buf\n");
+			//buf_write(lines, "add ecx, [buf_p]\n");
+			//buf_write(lines, "mov ebx, 1\n");
+			if (a_count > 1){
+				sprintf(temp, "mov edx, %d\n", a_count);
+				buf_write(lines, temp);
+				buf_write(lines, "sub [ecx], edx\n\n");
+			} else {
+				buf_write(lines, "mov ebx, 1\n");
+				buf_write(lines, "sub [ecx], ebx\n\n");
+			}
+		} else if (commands[i] == '.'){
+
+			buf_write(lines, "mov eax, 4\n");
+			buf_write(lines, "mov ebx, 1\n");
+			buf_write(lines, "mov edx, 1\n");
+			buf_write(lines, "int 0x80\n");
+			buf_write(lines, "mov eax, buf_p\n");
+			buf_write(lines, "mov ecx, buf\n");
+			buf_write(lines, "add ecx, [buf_p]\n\n");
+		} else if (commands[i] == '>'){
+			//buf_write(lines, "mov ecx, buf_p\n");
+			buf_write(lines, "mov ebx, 4\n");
+			buf_write(lines, "add [buf_p], ebx\n");
+			buf_write(lines, "mov ecx, buf\n");
+			buf_write(lines, "add ecx, [buf_p]\n\n");
+		} else if (commands[i] == '<'){
+			//buf_write(lines, "mov ecx, buf_p\n");
+			buf_write(lines, "mov ebx, 4\n");
+			buf_write(lines, "sub [buf_p], ebx\n");
+			buf_write(lines, "mov ecx, buf\n");
+			buf_write(lines, "add ecx, [buf_p]\n\n");
+		} else if (commands[i] == '['){
+			sprintf(temp, "ll%ds%d:\n", label_l, labels_d[label_l]);
+			labels[label_l]++;
+			label_l++;
+			buf_write(lines, temp);
+		} else if (commands[i] == ']'){
+			// buf_write(lines, "mov eax, buf_p\n");
+			// buf_write(lines, "mov ecx, buf\n");
+			// buf_write(lines, "add ecx, [eax]\n");
+			buf_write(lines, "mov edx, [ecx]\n");
+			buf_write(lines, "cmp edx, 0\n");
+			sprintf(temp, "jnz ll%ds%d\n", label_l-1, labels_d[label_l-1]);
+			label_l--;
+			labels[label_l]--;
+			if (labels[label_l] == 0){
+				labels_d[label_l]++;
+			}
+			buf_write(lines, temp);
+		}
+	}
+}
+
+char * read_bf(char *filename){
+	int i;
+
+	char f1_hold[1000];
+	char* commands = (char *)malloc(30000);
+	FILE* read_f;
+	int total_c;
+	int real_ptr;
+
+	sprintf(f1_hold, "%s.bf", filename);
+	read_f = fopen(f1_hold, "r");
+
+	total_c = fread(commands, 1, 30000, read_f);
+	int r_ptr = 0;
+	for (i = 0; i < total_c; i++){
+		if (strchr(".+-<>[]", commands[i])){
+			commands[r_ptr++] = commands[i];
+		}
+	}
+
+	fclose(read_f);
+
+	commands[r_ptr] = '\0';
+
+	return commands;
+}
+
+void write_asm(asm_h* lines, char * filename){
 	char f1_hold[1000];
 	int i;
     FILE* f;
@@ -38,8 +170,8 @@ void write_asm(int buf_n, char ** buffer, char * filename){
 		fwrite(beg[i], strlen(beg[i]), 1, f);
 	}
 
-	for (i = 0; i < buf_n; i++){
-		sprintf(f1_hold, "\t%s", buffer[i]);
+	for (i = 0; i < lines->n; i++){
+		sprintf(f1_hold, "\t%s\n", lines->buffer[i]);
 		fwrite(f1_hold, strlen(f1_hold), 1, f);
 	}
 
@@ -55,7 +187,7 @@ void create_exe(char * filename){
     char f1_hold[1000];
     char f2_hold[1000];
     
-	if (!only_asm){
+	if (!only_asm_h){
 	    pid = fork();
 		if (pid){
 			wait(NULL);
@@ -86,11 +218,6 @@ void create_exe(char * filename){
 	}
 }
 
-void buf_write(int* buf_n, char * str, char ** buffer){
-	buffer[*buf_n] = (char *)malloc(strlen(str));
-	strcpy(buffer[(*buf_n)++], str);
-}
-
 int main(int argc, char* argv[]){
 	if (argc < 2){
 		fprintf(stderr, "No input specified\n");
@@ -102,7 +229,7 @@ int main(int argc, char* argv[]){
 
 	while ((opt = getopt(argc, argv, "SO")) != -1){
 		switch (opt){
-			case 'S': only_asm = 1; break;
+			case 'S': only_asm_h = 1; break;
 			case 'O': only_object = 1; break;
 			default: ;
 		}
@@ -110,125 +237,25 @@ int main(int argc, char* argv[]){
 
 	char* loc = rindex(argv[argc-1], '.');
 
+
+
 	if (loc <= 0){
 		fprintf(stderr, "Error parsing filename\n");
 	}
+
 	char filename[loc - argv[argc-1]];
 	memcpy((void *)filename, (void *)argv[argc-1], loc-argv[argc-1]);
 
-	char * file[10000];
-	char * buffer[30000];
-	int buf_n = 0;
+	//char * file[10000];
 
-	int labels[500] = {0};
-	int labels_d[500] = {0};
-	int label_l = 0;
-	char read_buffer[30001];
+	asm_h* lines = malloc(sizeof(asm_h));
+	lines->n = 0;
 
-	FILE* read_f;
-	read_f = fopen(argv[argc-1], "r");
+	char* commands = read_bf(filename);
 
-	int t = fread(read_buffer, 1, 30000, read_f);
-	int r_ptr = 0;
-	for (i = 0; i < t; i++){
-		if (strchr(".+-<>[]", read_buffer[i])){
-			read_buffer[r_ptr++] = read_buffer[i];
-		}
-	}
+	bf_to_asm(lines, commands);
 
-	fclose(read_f);
-
-	read_buffer[r_ptr] = '\0';
-
-	char temp[80];
-	int a_count;
-	buf_write(&buf_n, "mov ebx, 1\n", buffer);
-	buf_write(&buf_n, "mov eax, buf_p\n", buffer);
-	buf_write(&buf_n, "mov ecx, buf\n", buffer);
-	buf_write(&buf_n, "add ecx, [buf_p]\n\n", buffer);
-	for (i = 0; i < strlen(read_buffer); i++){
-		if (read_buffer[i] == '+'){
-			a_count = 1;
-			while (read_buffer[++i] == '+'){
-				a_count++;
-			} 
-			i--;
-
-			//buf_write(&buf_n, "mov eax, buf_p\n", buffer);
-			///buf_write(&buf_n, "mov ecx, buf\n", buffer);
-			//buf_write(&buf_n, "add ecx, [buf_p]\n", buffer);
-			//buf_write(&buf_n, "mov ebx, 1\n", buffer);
-			if (a_count > 1){
-				sprintf(temp, "mov edx, %d\n", a_count);
-				buf_write(&buf_n, temp, buffer);
-				buf_write(&buf_n, "add [ecx], edx\n\n", buffer);
-			} else {
-				buf_write(&buf_n, "mov ebx, 1\n", buffer);
-				buf_write(&buf_n, "add [ecx], ebx\n\n", buffer);
-			}
-			
-		} else if (read_buffer[i] == '-'){
-			a_count = 1;
-			while (read_buffer[++i] == '-'){
-				a_count++;
-			} 
-			i--;
-
-			//buf_write(&buf_n, "mov eax, buf_p\n", buffer);
-			///buf_write(&buf_n, "mov ecx, buf\n", buffer);
-			//buf_write(&buf_n, "add ecx, [buf_p]\n", buffer);
-			//buf_write(&buf_n, "mov ebx, 1\n", buffer);
-			if (a_count > 1){
-				sprintf(temp, "mov edx, %d\n", a_count);
-				buf_write(&buf_n, temp, buffer);
-				buf_write(&buf_n, "sub [ecx], edx\n\n", buffer);
-			} else {
-				buf_write(&buf_n, "mov ebx, 1\n", buffer);
-				buf_write(&buf_n, "sub [ecx], ebx\n\n", buffer);
-			}
-		} else if (read_buffer[i] == '.'){
-
-			buf_write(&buf_n, "mov eax, 4\n", buffer);
-			buf_write(&buf_n, "mov ebx, 1\n", buffer);
-			buf_write(&buf_n, "mov edx, 1\n", buffer);
-			buf_write(&buf_n, "int 0x80\n", buffer);
-			buf_write(&buf_n, "mov eax, buf_p\n", buffer);
-			buf_write(&buf_n, "mov ecx, buf\n", buffer);
-			buf_write(&buf_n, "add ecx, [buf_p]\n\n", buffer);
-		} else if (read_buffer[i] == '>'){
-			//buf_write(&buf_n, "mov ecx, buf_p\n", buffer);
-			buf_write(&buf_n, "mov ebx, 4\n", buffer);
-			buf_write(&buf_n, "add [buf_p], ebx\n", buffer);
-			buf_write(&buf_n, "mov ecx, buf\n", buffer);
-			buf_write(&buf_n, "add ecx, [buf_p]\n\n", buffer);
-		} else if (read_buffer[i] == '<'){
-			//buf_write(&buf_n, "mov ecx, buf_p\n", buffer);
-			buf_write(&buf_n, "mov ebx, 4\n", buffer);
-			buf_write(&buf_n, "sub [buf_p], ebx\n", buffer);
-			buf_write(&buf_n, "mov ecx, buf\n", buffer);
-			buf_write(&buf_n, "add ecx, [buf_p]\n\n", buffer);
-		} else if (read_buffer[i] == '['){
-			sprintf(temp, "ll%ds%d:\n", label_l, labels_d[label_l]);
-			labels[label_l]++;
-			label_l++;
-			buf_write(&buf_n, temp, buffer);
-		} else if (read_buffer[i] == ']'){
-			// buf_write(&buf_n, "mov eax, buf_p\n", buffer);
-			// buf_write(&buf_n, "mov ecx, buf\n", buffer);
-			// buf_write(&buf_n, "add ecx, [eax]\n", buffer);
-			buf_write(&buf_n, "mov edx, [ecx]\n", buffer);
-			buf_write(&buf_n, "cmp edx, 0\n", buffer);
-			sprintf(temp, "jnz ll%ds%d\n", label_l-1, labels_d[label_l-1]);
-			label_l--;
-			labels[label_l]--;
-			if (labels[label_l] == 0){
-				labels_d[label_l]++;
-			}
-			buf_write(&buf_n, temp, buffer);
-		}
-	}
-
-	write_asm(buf_n, buffer, filename);
+	write_asm(lines, filename);
 	create_exe(filename);
 
 	return 0;
