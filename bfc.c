@@ -1,4 +1,5 @@
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,11 +12,12 @@ int only_object = 0;
 
 void create_exe(int buf_n, char ** buffer, char * filename){
     int pid;
-
-    char temp[1000];
+    char f1_hold[1000];
+    char f2_hold[1000];
     int i;
     FILE* f;
-	f = fopen("prog.asm", "w");
+    sprintf(f1_hold, "%s.asm", filename);
+	f = fopen(f1_hold, "w");
 
 		char * beg = "section	.text\n\
 \tglobal _start\n\
@@ -28,8 +30,8 @@ section    .data\n\
 	fwrite(beg, strlen(beg), 1, f);
 	fwrite("_start:\n", strlen("_start:\n"), 1, f);
 	for (i = 0; i < buf_n; i++){
-		sprintf(temp, "\t%s", buffer[i]);
-		fwrite(temp, strlen(temp), 1, f);
+		sprintf(f1_hold, "\t%s", buffer[i]);
+		fwrite(f1_hold, strlen(f1_hold), 1, f);
 	}
 	char * end = "\tmov eax, 1\n\tmov ebx, 0\n\tint 0x80";
 	fwrite(end, strlen(end), 1, f);
@@ -41,9 +43,11 @@ section    .data\n\
 
 		if (pid){
 			wait(NULL);
-			unlink("prog.asm");
+			sprintf(f1_hold, "%s.asm", filename);
+			unlink(f1_hold);
 			if (!only_object){
-				unlink("prog.o");
+				sprintf(f1_hold, "%s.o", filename);
+				unlink(f1_hold);
 			}
 
 		} else {
@@ -52,13 +56,16 @@ section    .data\n\
 		    if (pid){
 		    	wait(NULL);
 		    	if (!only_object){
-			    	char * commands[7] = {"ld", "-m", "elf_i386", "-o", "prog", "prog.o", NULL};
+		    		sprintf(f1_hold, "%s.o", filename);
+			    	char * commands[7] = {"ld", "-m", "elf_i386", "-o", filename, f1_hold, NULL};
 					execvp(commands[0], commands);
 				} else {
 					exit(0);
 				}
 		    } else {
-		    	char * commands[5] = {"nasm", "-f", "elf", "prog.asm", NULL};
+		    	sprintf(f1_hold, "%s.o", filename);
+		    	sprintf(f2_hold, "%s.asm", filename);
+		    	char * commands[7] = {"nasm", "-f", "elf", "-o", f1_hold, f2_hold, NULL};
 				execvp(commands[0], commands);
 		    }
 			
@@ -74,10 +81,11 @@ void buf_write(int* buf_n, char * str, char ** buffer){
 
 int main(int argc, char* argv[]){
 	if (argc < 2){
-		printf("No input specified\n");
+		fprintf(stderr, "No input specified\n");
 		return -1;
 	}
 
+	int i;
 	int opt;
 
 	while ((opt = getopt(argc, argv, "SO")) != -1){
@@ -88,15 +96,18 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	int i;
+	char* loc = rindex(argv[argc-1], '.');
+
+	if (loc <= 0){
+		fprintf(stderr, "Error parsing filename\n");
+	}
+	char filename[loc - argv[argc-1]];
+	memcpy((void *)filename, (void *)argv[argc-1], loc-argv[argc-1]);
+
 	char * file[10000];
-
-
-
 	char * buffer[30000];
 	int buf_n = 0;
 
-	int buf_p = 0;
 	int labels[500] = {0};
 	int labels_d[500] = {0};
 	int label_l = 0;
@@ -205,7 +216,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	create_exe(buf_n, buffer, argv[1]);
+	create_exe(buf_n, buffer, filename);
 
 	return 0;
 }
