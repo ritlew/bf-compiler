@@ -218,10 +218,10 @@ void create_exe(char * filename){
 	}
 }
 
-int main(int argc, char* argv[]){
+void handle_argv(int argc, char* argv[]){
 	if (argc < 2){
 		fprintf(stderr, "No input specified\n");
-		return -1;
+		exit(-1);
 	}
 
 	int i;
@@ -234,10 +234,12 @@ int main(int argc, char* argv[]){
 			default: ;
 		}
 	}
+}
+
+int main(int argc, char* argv[]){
+	handle_argv(argc, argv);
 
 	char* loc = rindex(argv[argc-1], '.');
-
-
 
 	if (loc <= 0){
 		fprintf(stderr, "Error parsing filename\n");
@@ -245,8 +247,6 @@ int main(int argc, char* argv[]){
 
 	char filename[loc - argv[argc-1]];
 	memcpy((void *)filename, (void *)argv[argc-1], loc-argv[argc-1]);
-
-	//char * file[10000];
 
 	asm_h* lines = malloc(sizeof(asm_h));
 	lines->n = 0;
