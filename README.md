@@ -1,7 +1,7 @@
 # bf-compiler
 A compiler written in C that converts BF instructions to x86 assembly and then compiles into an executable using nasm and ld.
 
-Will work with basic programs, but there is still some bugs with looping.
+Tested on all programs in examples folder on Ubuntu 16.04.
 
 ## Dependencies 
 `nasm` is a dependancy for this program.
