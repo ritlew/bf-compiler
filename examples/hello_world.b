@@ -31,3 +31,5 @@
 31 +++.----- -.----- ---.  Cell #3 for 'rl' and 'd'
 32 >>+.                    Add 1 to Cell #5 gives us an exclamation point
 33 >++.                    And finally a newline from Cell #6
+
+Retrieved from https://esolangs org/wiki/brainfuck
