@@ -1,3 +1,13 @@
+/*
+Filename: bfc.c
+Author: Samuel Lewis
+Purpose: This program will compile files written in the language Brainfuck. The program will
+accept a .b script and output a executable. With the -S switch it will output a .asm file.
+With the -O switch it will output a .o file. There are some optimizations with sequenced commands:
++, -, <, >, ,, and .. It will count how many their are in a row and execute them with as few
+lines of assembly as possible.
+*/
+
 #include <string.h>
 #include <strings.h>
 #include <stdio.h>
@@ -154,8 +164,14 @@ void bf_to_asm(asm_h* lines, char* commands){
 		// logic for '>' command
 		// this command moves the pointer 1 cell to the right
 		} else if (commands[i] == '>'){
-			// put 4 in ebx, as cells are 4 bytes wide
-			buf_write(lines, "mov ebx, 4");
+			a_count = 1;
+			while (commands[++i] == '>'){
+				a_count++;
+			} 
+			i--;
+			// put 4*a_count in ebx, as cells are 4 bytes wide
+			sprintf(temp, "mov ebx, %d", 4 * a_count);
+			buf_write(lines, temp);
 			// add this to buf_p
 			buf_write(lines, "add [buf_p], ebx");
 			// reset ecx location
@@ -166,7 +182,13 @@ void bf_to_asm(asm_h* lines, char* commands){
 		// this command moves the pointer 1 cell to the left
 		// refer to comments to the '+' command
 		} else if (commands[i] == '<'){
-			buf_write(lines, "mov ebx, 4");
+			a_count = 1;
+			while (commands[++i] == '<'){
+				a_count++;
+			} 
+			i--;
+			sprintf(temp, "mov ebx, %d", 4 * a_count);
+			buf_write(lines, temp);
 			// subtract this from buf_p
 			buf_write(lines, "sub [buf_p], ebx");
 			buf_write(lines, "mov ecx, buf");
@@ -397,7 +419,7 @@ int main(int argc, char* argv[]){
 		fprintf(stderr, "Files must end with '.b' extension: %s\n", argv[argc-1]);
 		exit(-1);
 	}
-	// filename must have . followed by b
+	// filename must have the last '.' be right before the last 'b'
 	// filename must end with b
 	if (!((loc_e + 1 == rindex(argv[argc-1], 'b') &&
 		rindex(argv[argc-1], 'b') - argv[argc-1] == strlen(argv[argc-1])-1))){
