@@ -1,5 +1,5 @@
 # bf-compiler
-A C program that converts BF instructions to x86 assembly and then compiles into an executable using nasm and ld.
+A compiler written in C that converts BF instructions to x86 assembly and then compiles into an executable using nasm and ld.
 
 Will work with basic programs, but there is still some bugs with looping.
 
