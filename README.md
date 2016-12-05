@@ -10,13 +10,13 @@ gcc -o bfc bfc.c
 ## Running
 Simply compile your program into an executable with the following command (needs .bf extention):
 ```
-./bfc program.bf
+./bfc examples/hello_world.bf
 ```
 Output assembly file:
 ```
-./bfc -S program.bf
+./bfc -S examples/hello_world.bf
 ```
 Output object file:
 ```
-./bfc -O program.bf
+./bfc -O examples/hello_world.bf
 ```
