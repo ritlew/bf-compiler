@@ -46,7 +46,7 @@ void buf_write(asm_h* lines, char * str){
 // param commands: string of BF command characters
 void bf_to_asm(asm_h* lines, char* commands){
 	// counter variable
-	int i;
+	int i, j;
 
 	/* the following two variables are for the construction of loop label in assembly */
 
@@ -136,28 +136,48 @@ void bf_to_asm(asm_h* lines, char* commands){
 		// logic for '.' command
 		// this command prints out the ascii character for the current cell
 		} else if (commands[i] == '.'){
-			// put 4 in eax, for sys_write
-			buf_write(lines, "mov eax, 4");
+			a_count = 1;
+			while (commands[++i] == '.'){
+				a_count++;
+			} 
+			i--;
+			
+			
 			// put 1 in ebx, for stdout
 			buf_write(lines, "mov ebx, 1");
 			// put 1 in edx, for length 1 character array (1 character)
 			buf_write(lines, "mov edx, 1");
 			// call sys_write
 			// (buf pointer is already in ecx)
-			buf_write(lines, "int 0x80");
+			// do as many times as needed
+			for (j = 0; j < a_count; j++){
+				// put 4 in eax, for sys_write
+				buf_write(lines, "mov eax, 4");
+				buf_write(lines, "int 0x80");
+			}
 			// put buf_p back in eax, as that is where its expected to be for other commands
 			buf_write(lines, "mov eax, buf_p");
 		// logic for ',' cinnabd
 		// this command accepts one ascii character as input
 		} else if (commands[i] == ','){
-			// put 3 in eax, for sys_read
-			buf_write(lines, "mov eax, 3");
+			a_count = 1;
+			while (commands[++i] == ','){
+				a_count++;
+			} 
+			i--;
 			// put 0 in ebx, for stdin
 			buf_write(lines, "mov ebx, 0");
 			// put 1 in edx, for length 1 character array (1 character)
 			buf_write(lines, "mov edx, 1");
-			// call sys_write
-			// (buf pointer is already in ecx)
+			// do as many times as needed
+			for (j = 0; j < a_count; j++){
+				// put 3 in eax, for sys_read
+				buf_write(lines, "mov eax, 3");
+				// call sys_write
+				// (buf pointer is already in ecx)
+				buf_write(lines, "int 0x80");
+			}
+			
 			buf_write(lines, "int 0x80");
 			// put buf_p back in eax, as that is where its expected to be for other commands
 			buf_write(lines, "mov eax, buf_p");
