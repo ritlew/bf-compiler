@@ -226,7 +226,10 @@ char * read_bf(char *filepath){
 	// pointer to the end of the real bf commands
 	int r_ptr = 0;
 
-	read_f = fopen(filepath, "r");
+	if ((read_f = fopen(filepath, "r")) == NULL){
+		perror("Error opening file");
+		exit(-1);
+	}
 
 	// read all characters
 	total_c = fread(commands, 1, 30000, read_f);
@@ -389,9 +392,16 @@ int main(int argc, char* argv[]){
 	char * loc_e = rindex(argv[argc-1], '.');
 
 	// if there was no file extention
-	if (loc_e < 0){
+	if (loc_e <= 0){
 		// exit
-		fprintf(stderr, "Error parsing filename\n");
+		fprintf(stderr, "Files must end with '.b' extension: %s\n", argv[argc-1]);
+		exit(-1);
+	}
+	// filename must have . followed by b
+	// filename must end with b
+	if (!((loc_e + 1 == rindex(argv[argc-1], 'b') &&
+		rindex(argv[argc-1], 'b') - argv[argc-1] == strlen(argv[argc-1])-1))){
+		fprintf(stderr, "Files must end with '.b' extension: %s\n", argv[argc-1]);
 		exit(-1);
 	}
 
@@ -406,10 +416,10 @@ int main(int argc, char* argv[]){
 		len = loc_e - argv[argc-1];
 	}
 	// create filename 
-	char filename[len];
+	char filename[len+1];
+	filename[len] = '\0';
 	// copy the base filename into the buffer
-	memcpy((void *)filename, (void *)argv[argc-1] + strlen(argv[argc-1]) - len - 3, len);
-
+	memcpy((void *)filename, (void *)argv[argc-1] + strlen(argv[argc-1]) - len - 2, len);
 	// create the assembly containter struct
 	asm_h* lines = malloc(sizeof(asm_h));
 	lines->n = 0;
