@@ -137,10 +137,20 @@ void bf_to_asm(asm_h* lines, char* commands){
 			buf_write(lines, "int 0x80");
 			// put buf_p back in eax, as that is where its expected to be for other commands
 			buf_write(lines, "mov eax, buf_p");
-			// put buf back in ecx, as taht is where its expected to be for other commands
-			buf_write(lines, "mov ecx, buf");
-			// put ecx at the correct index
-			buf_write(lines, "add ecx, [buf_p]\n");
+		// logic for ',' cinnabd
+		// this command accepts one ascii character as input
+		} else if (commands[i] == ','){
+			// put 3 in eax, for sys_read
+			buf_write(lines, "mov eax, 3");
+			// put 0 in ebx, for stdin
+			buf_write(lines, "mov ebx, 0");
+			// put 1 in edx, for length 1 character array (1 character)
+			buf_write(lines, "mov edx, 1");
+			// call sys_write
+			// (buf pointer is already in ecx)
+			buf_write(lines, "int 0x80");
+			// put buf_p back in eax, as that is where its expected to be for other commands
+			buf_write(lines, "mov eax, buf_p");
 		// logic for '>' command
 		// this command moves the pointer 1 cell to the right
 		} else if (commands[i] == '>'){
@@ -229,7 +239,7 @@ char * read_bf(char *filepath){
 	// but it optimizes sequenced + and -
 	for (i = 0; i < total_c; i++){
 		// check if the character is a bf command
-		if (strchr(".+-<>[]", commands[i])){
+		if (strchr(".,+-<>[]", commands[i])){
 			// put it in the array if so
 			commands[r_ptr++] = commands[i];
 		}
