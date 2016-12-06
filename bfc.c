@@ -178,7 +178,6 @@ void bf_to_asm(asm_h* lines, char* commands){
 				buf_write(lines, "int 0x80");
 			}
 			
-			buf_write(lines, "int 0x80");
 			// put buf_p back in eax, as that is where its expected to be for other commands
 			buf_write(lines, "mov eax, buf_p");
 		// logic for '>' command
