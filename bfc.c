@@ -302,9 +302,9 @@ void write_asm(asm_h* lines, char * filename){
 	// temporary buffer for sprintf
 	char f1_hold[1000];
 	// file pointer
-    FILE* f;
-    
-    // header for assembly
+	FILE* f;
+	
+	// header for assembly
 	char * beg[7] = {
 		"section\t.text\n",
 		"\tglobal _start\n",
@@ -350,14 +350,14 @@ void write_asm(asm_h* lines, char * filename){
 // this function creates the final exe, or object file
 void create_exe(char * filename){
 	// pid for forking
-    int pid;
-    // buffer for sprintf
+	int pid;
+	// buffer for sprintf
 	char f1_hold[1000];
 	// buffer for sprintf
 	char f2_hold[1000];
 	// fork, one for controller, one to fork again for compiling
-    pid = fork();
-    //parent
+	pid = fork();
+	//parent
 	if (pid){
 		// wait for children
 		wait(NULL);
@@ -377,29 +377,29 @@ void create_exe(char * filename){
 			pid = fork();
 		}
 		// this will always be 0 if they only wanted the obect file
-	    if (pid){
-	    	// wait for children
-	    	wait(NULL);
-	    	// if they didn' want just the object file
-    	
-    		// compile into executable
-    		// get filename for object file
-    		sprintf(f1_hold, "%s.o", filename);
-    		// call ld to link object file
-	    	char * commands[7] = {"ld", "-m", "elf_i386", "-o", filename, f1_hold, NULL};
-	    	// exec
+		if (pid){
+			// wait for children
+			wait(NULL);
+			// if they didn' want just the object file
+		
+			// compile into executable
+			// get filename for object file
+			sprintf(f1_hold, "%s.o", filename);
+			// call ld to link object file
+			char * commands[7] = {"ld", "-m", "elf_i386", "-o", filename, f1_hold, NULL};
+			// exec
 			execvp(commands[0], commands);
 		// create the object file
-	    } else {
-	    	// object file filename
-	    	sprintf(f1_hold, "%s.o", filename);
-	    	// assembly file filename
-	    	sprintf(f2_hold, "%s.asm", filename);
-	    	// commands to call nasm to assemble the assembly
-	    	char * commands[7] = {"nasm", "-f", "elf", "-o", f1_hold, f2_hold, NULL};
-	    	// exec
+		} else {
+			// object file filename
+			sprintf(f1_hold, "%s.o", filename);
+			// assembly file filename
+			sprintf(f2_hold, "%s.asm", filename);
+			// commands to call nasm to assemble the assembly
+			char * commands[7] = {"nasm", "-f", "elf", "-o", f1_hold, f2_hold, NULL};
+			// exec
 			execvp(commands[0], commands);
-	    }	
+		}	
 	}
 }
 
