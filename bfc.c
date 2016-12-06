@@ -411,8 +411,6 @@ void handle_argv(int argc, char* argv[]){
 		exit(-1);
 	}
 
-	// counter
-	int i;
 	// var for getopt
 	int opt;
 
