@@ -1,5 +1,5 @@
 # bf-compiler
-A compiler written in C that converts BF instructions to x86 assembly and then compiles into an executable using nasm and ld.
+A compiler written in C that converts Brainfuck instructions to x86 assembly and then compiles into an executable using nasm and ld.
 
 Tested on all programs in examples folder on Ubuntu 16.04.
 
