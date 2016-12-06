@@ -455,7 +455,6 @@ void handle_filename(char* orig, char base[]){
 	base[len] = '\0';
 	// copy the base filename into the buffer
 	memcpy((void *)base, (void *)orig + strlen(orig) - len - 2, len);
-	printf("%s\n", base);
 }
 
 int main(int argc, char* argv[]){
