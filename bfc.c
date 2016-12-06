@@ -424,41 +424,46 @@ void handle_argv(int argc, char* argv[]){
 	}
 }
 
-int main(int argc, char* argv[]){
-	handle_argv(argc, argv);
-
+void handle_filename(char* orig, char base[]){
 	// location of '.' for extension
-	char * loc_e = rindex(argv[argc-1], '.');
-
+	char * loc_e = rindex(orig, '.');
 	// if there was no file extention
 	if (loc_e <= 0){
 		// exit
-		fprintf(stderr, "Files must end with '.b' extension: %s\n", argv[argc-1]);
+		fprintf(stderr, "Files must end with '.b' extension: %s\n", orig);
 		exit(-1);
 	}
 	// filename must have the last '.' be right before the last 'b'
 	// filename must end with b
-	if (!((loc_e + 1 == rindex(argv[argc-1], 'b') &&
-		rindex(argv[argc-1], 'b') - argv[argc-1] == strlen(argv[argc-1])-1))){
-		fprintf(stderr, "Files must end with '.b' extension: %s\n", argv[argc-1]);
+	if (!((loc_e + 1 == rindex(orig, 'b') &&
+		rindex(orig, 'b') - orig == strlen(orig)-1))){
+		fprintf(stderr, "Files must end with '.b' extension: %s\n", orig);
 		exit(-1);
 	}
 
 	// location of last '/' if they gave a file in a different directory
-	char * loc_s = rindex(argv[argc-1], '/');
+	char * loc_s = rindex(orig, '/');
 	int len;
 	// len is from just after '/' to just before '.'
 	if (loc_s > 0){
 		len = loc_e - loc_s - 1;
 	// len is from beginning to '.''
 	} else {
-		len = loc_e - argv[argc-1];
+		len = loc_e - orig;
 	}
 	// create filename 
-	char filename[len+1];
-	filename[len] = '\0';
+	base[len] = '\0';
 	// copy the base filename into the buffer
-	memcpy((void *)filename, (void *)argv[argc-1] + strlen(argv[argc-1]) - len - 2, len);
+	memcpy((void *)base, (void *)orig + strlen(orig) - len - 2, len);
+	printf("%s\n", base);
+}
+
+int main(int argc, char* argv[]){
+	handle_argv(argc, argv);
+
+	char filename[200];
+	handle_filename(argv[argc-1], filename);
+	
 	// create the assembly containter struct
 	asm_h* lines = malloc(sizeof(asm_h));
 	lines->n = 0;
