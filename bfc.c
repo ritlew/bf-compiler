@@ -36,7 +36,8 @@ typedef struct {
 // shortcut for writing a line to the struct
 void buf_write(asm_h* lines, char * str){
 	// make room
-	lines->buffer[lines->n] = (char *)malloc(strlen(str));
+	lines->buffer[lines->n] = (char *)malloc(strlen(str)+1);
+	lines->buffer[lines->n][strlen(str)] = '\0';
 	// copy the string into the buffer
 	strcpy(lines->buffer[lines->n++], str);
 }
