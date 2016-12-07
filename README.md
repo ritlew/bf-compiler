@@ -6,7 +6,11 @@ The program has 30000 cells, and can only read 30000 total commands (+-.,[]<>) f
 Tested on all programs in examples folder on Ubuntu 16.04.
 
 ## Dependencies 
-`nasm` is a dependancy for this program.
+`nasm` is a dependancy for this program. If you get a message like:
+```
+ld: cannot find hello_world.o: No such file or directory
+```
+Then you need to install nasm.
 ```
 sudo apt-get install nasm
 ```
