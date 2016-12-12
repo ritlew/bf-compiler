@@ -3,7 +3,7 @@ A compiler written in C that converts Brainfuck instructions to x86 assembly and
 
 The program has 30000 cells, and can only read 30000 total commands (+-.,[]<>) from the file (arbitrary). Cells are 32-bit.
 
-Tested on all programs in examples folder on Ubuntu 16.04.
+Tested on all programs in examples folder on Ubuntu 16.04 and Fedora 25.
 
 ## Dependencies 
 `nasm` is a dependancy for this program. If you get a message like:
