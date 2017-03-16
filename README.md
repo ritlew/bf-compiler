@@ -1,5 +1,5 @@
 # bf-compiler
-A compiler written in C that converts Brainfuck instructions to x86 assembly and then compiles into an executable using nasm and ld.
+A compiler written in C that converts bf instructions to x86 assembly and then compiles into an executable using nasm and ld.
 
 The program has 30000 cells, and can only read 30000 total commands (+-.,[]<>) from the file. Cells are 32-bit.
 
