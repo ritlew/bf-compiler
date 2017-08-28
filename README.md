@@ -3,7 +3,7 @@ A compiler written in C that converts bf instructions to x86 assembly and then c
 
 The program has 30000 cells, and can only read 30000 total commands (+-.,[]<>) from the file. Cells are 32-bit.
 
-Tested on all programs in examples folder on Ubuntu 16.04 and Fedora 25.
+Tested on all programs in examples folder on Ubuntu 16.04 and Fedora 25. Not supported on Windows.
 
 ## Dependencies 
 `nasm` is a dependancy for this program. If you get a message like:
