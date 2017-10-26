@@ -85,9 +85,9 @@ void bf_to_asm(asm_h* lines, char* commands){
 	// the pointer which moves around with '<' and '>' is buf_p
 
 	// buf_p is generally in eax
-	buf_write(lines, "mov eax, buf_p");
+	buf_write(lines, "mov $buf_p, %eax");
 	// buf is generally in ecx
-	buf_write(lines, "mov ecx, buf\n");
+	buf_write(lines, "mov $buf, %ecx\n");
 	for (i = 0; i < strlen(commands); i++){
 		// logic for '+' command
 		// this command adds 1 to the current cell
@@ -104,15 +104,15 @@ void bf_to_asm(asm_h* lines, char* commands){
 			// if we have more than one
 			if (a_count > 1){
 				// put that many in edx
-				sprintf(temp, "mov edx, %d", a_count);
+				sprintf(temp, "mov $%d, %%edx", a_count);
 				buf_write(lines, temp);
 				// add them to the current cell
-				buf_write(lines, "add [ecx], edx\n");
+				buf_write(lines, "add %edx, (%ecx)\n");
 			// we only have one '+'
 			} else {
 				// add only 1 to the current cell
-				buf_write(lines, "mov ebx, 1");
-				buf_write(lines, "add [ecx], ebx\n");
+				buf_write(lines, "mov $1, %ebx");
+				buf_write(lines, "add %ebx, (%ecx)\n");
 			}
 		// logic for '-' command
 		// this command subtracts one from the current cell
@@ -125,14 +125,14 @@ void bf_to_asm(asm_h* lines, char* commands){
 			i--;
 
 			if (a_count > 1){
-				sprintf(temp, "mov edx, %d", a_count);
+				sprintf(temp, "mov $%d, %%edx", a_count);
 				buf_write(lines, temp);
 				// subtract that many from the current cell
-				buf_write(lines, "sub [ecx], edx\n");
+				buf_write(lines, "sub %edx, (%ecx)\n");
 			} else {
-				buf_write(lines, "mov ebx, 1");
+				buf_write(lines, "mov $1, %ebx");
 				// subtract from the current cell
-				buf_write(lines, "sub [ecx], ebx\n");
+				buf_write(lines, "sub %ebx, (%ecx)\n");
 			}
 		// logic for '.' command
 		// this command prints out the ascii character for the current cell
@@ -306,25 +306,27 @@ void write_asm(asm_h* lines, char * filename){
 	FILE* f;
 	
 	// header for assembly
-	char * beg[7] = {
-		"section\t.text\n",
-		"\tglobal _start\n",
+	char * beg[9] = {
+		".data\n",
+		"buf:\n",
+		"\t.zero 30000\n",
+		"buf_p:\n",
+		"\t.long 0\n\n",
+		".text\n",
+		".globl _start\n",
 		"\n",
-		"section\t.data\n",
-		"\tbuf times 30000 dd 0\n",
-		"\tbuf_p dd 0\n\n",
 		"_start:\n"
 	};
 
 	// make sure to always exit on program end
 	char * end[3] = {
-		"\tmov eax, 1\n",
-		"\tmov ebx, 0\n",
-		"\tint 0x80\n"
+		"\tmov $1, %eax\n",
+		"\tmov $0, %ebx\n",
+		"\tint $0x80\n"
 	};
 
 	// file name
-	sprintf(f1_hold, "%s.asm", filename);
+	sprintf(f1_hold, "%s.S", filename);
 	// open file for writing
 	f = fopen(f1_hold, "w");
 
@@ -363,7 +365,7 @@ void create_exe(char * filename){
 		// wait for children
 		wait(NULL);
 		// delete .asm file
-		sprintf(f1_hold, "%s.asm", filename);
+		sprintf(f1_hold, "%s.S", filename);
 		unlink(f1_hold);
 		// if they didn't want just the object file
 		if (!only_object){
@@ -387,7 +389,7 @@ void create_exe(char * filename){
 			// get filename for object file
 			sprintf(f1_hold, "%s.o", filename);
 			// call ld to link object file
-			char * commands[7] = {"ld", "-m", "elf_i386", "-o", filename, f1_hold, NULL};
+			char * commands[5] = {"ld","-o", filename, f1_hold, NULL};
 			// exec
 			execvp(commands[0], commands);
 		// create the object file
@@ -395,9 +397,9 @@ void create_exe(char * filename){
 			// object file filename
 			sprintf(f1_hold, "%s.o", filename);
 			// assembly file filename
-			sprintf(f2_hold, "%s.asm", filename);
+			sprintf(f2_hold, "%s.S", filename);
 			// commands to call nasm to assemble the assembly
-			char * commands[7] = {"nasm", "-f", "elf", "-o", f1_hold, f2_hold, NULL};
+			char * commands[5] = {"as", "-o", f1_hold, f2_hold, NULL};
 			// exec
 			execvp(commands[0], commands);
 		}	
