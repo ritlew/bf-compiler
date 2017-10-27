@@ -217,9 +217,9 @@ void bf_to_asm(asm_h* lines, char* commands){
 		// this command starts a loop 
 		} else if (commands[i] == '['){
 			// create the label for the loop
-			buf_write(lines, "mov edx, [ecx]");
+			buf_write(lines, "mov (%ecx), %edx");
 			// compare with 0
-			buf_write(lines, "cmp edx, 0");
+			buf_write(lines, "cmp $0, %edx");
 			sprintf(temp, "jz el%ds%d", label_l, labels_d[label_l]);
 			buf_write(lines, temp);
 			sprintf(temp, "ll%ds%d:", label_l, labels_d[label_l]);
@@ -232,9 +232,9 @@ void bf_to_asm(asm_h* lines, char* commands){
 		// the current cell will be comapred with 0, and repeat if it is not
 		} else if (commands[i] == ']'){
 			// put the value at the current cell into edx
-			buf_write(lines, "mov edx, [ecx]");
+			buf_write(lines, "mov (%ecx), %edx");
 			// compare with 0
-			buf_write(lines, "cmp edx, 0");
+			buf_write(lines, "cmp $0, %edx");
 			// jump to corresponding label if they are not equal
 			sprintf(temp, "jnz ll%ds%d", label_l-1, labels_d[label_l-1]);
 			// add jump command to assembly
