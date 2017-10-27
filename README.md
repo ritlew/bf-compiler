@@ -3,23 +3,21 @@ A compiler written in C that converts bf instructions to x86 assembly and then c
 
 The program has 30000 cells, and can only read 30000 total commands (+-.,[]<>) from the file. Cells are 32-bit.
 
-Tested on all programs in examples folder on Ubuntu 16.04 and Fedora 25. Not supported on Windows.
+Tested on all programs in examples folder on Ubuntu 16.04 and Fedora 25. It should work on any linux distrobution. Not supported on Windows.
 
 ## Dependencies 
-`nasm` is a dependancy for this program. If you get a message like:
-```
-ld: cannot find hello_world.o: No such file or directory
-```
-Then you need to install nasm.
-```
-sudo apt-get install nasm
-```
+Now using `as` instead of `nasm`! The only dependency is `gcc`.
 
 ## Compiling
 Simply compile the C file with the following command:  
 ```
 gcc -o bfc bfc.c
 ```
+or
+```
+make
+```
+
 ## Running
 Simply compile your program into an executable with the following command (needs .b extention):
 ```
