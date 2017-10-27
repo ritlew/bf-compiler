@@ -19,7 +19,8 @@ make
 ```
 
 ## Running
-Simply compile your program into an executable with the following command (needs .b extention):
+Simply compile your program into an executable with the following 
+command (needs .bf extention):
 ```
 ./bfc examples/hello_world.b
 ```

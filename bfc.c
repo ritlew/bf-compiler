@@ -433,14 +433,16 @@ void handle_filename(char* orig, char base[]){
 	// if there was no file extention
 	if (loc_e <= 0){
 		// exit
-		fprintf(stderr, "Files must end with '.b' extension: %s\n", orig);
+		fprintf(stderr, "Files must end with '.bf' extension: %s\n", orig);
 		exit(-1);
 	}
 	// filename must have the last '.' be right before the last 'b'
-	// filename must end with b
+	// filename must have the last '.' be two before the last 'f'
+	// filename must end with f
 	if (!((loc_e + 1 == rindex(orig, 'b') &&
-		rindex(orig, 'b') - orig == strlen(orig)-1))){
-		fprintf(stderr, "Files must end with '.b' extension: %s\n", orig);
+		loc_e + 2 == rindex(orig, 'f') &&
+		rindex(orig, 'f') - orig == strlen(orig)-1))){
+		fprintf(stderr, "Files must end with '.bf' extension: %s\n", orig);
 		exit(-1);
 	}
 
@@ -457,7 +459,7 @@ void handle_filename(char* orig, char base[]){
 	// create filename 
 	base[len] = '\0';
 	// copy the base filename into the buffer
-	memcpy((void *)base, (void *)orig + strlen(orig) - len - 2, len);
+	memcpy((void *)base, (void *)orig + strlen(orig) - len - 3, len);
 }
 
 int main(int argc, char* argv[]){
